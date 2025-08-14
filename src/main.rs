@@ -143,7 +143,7 @@ async fn run(args: &Args) -> Result<(), String> {
                 info!("Sent ping to {}", addr);
             }
             Err(err) => {
-                error!("Failed to ping to {}, error: {}", addr, err);
+                error!("Failed to ping {}, error: {}", addr, err);
             }
         }
     }
