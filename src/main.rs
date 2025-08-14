@@ -102,13 +102,16 @@ async fn run(args: &Args) -> Result<(), String> {
 
         let addr_clone = addr.clone();
 
-        spawn_blocking(move || {
+        let res = spawn_blocking(move || {
             let pinger = Ping::new(*addr_clone);
             return pinger.send();
         })
         .await
-        .map_err(|err| err.to_string())?
         .map_err(|err| err.to_string())?;
+
+        if res.is_err() {
+            error!("Failed to ping to {}", addr);
+        }
 
         info!("Sent ping to {}", addr);
     }
