@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{net::IpAddr, time::Duration};
 
 use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -26,7 +26,7 @@ impl Args {
         let logs_per_file = Duration::from_millis(self.logs_per_file);
 
         ParsedArgs {
-            address: self.address.clone(),
+            address: self.address.parse().unwrap(),
             interval,
             logs_per_file,
         }
@@ -35,7 +35,7 @@ impl Args {
 
 #[derive(Debug)]
 struct ParsedArgs {
-    address: String,
+    address: IpAddr,
     interval: Duration,
     logs_per_file: Duration,
 }
@@ -52,4 +52,17 @@ async fn main() {
     let args = Args::parse().convert();
 
     println!("Args: {:?}", args);
+}
+
+fn pong(args: &ParsedArgs) -> Result<(), ()> {
+    match ping::new(args.address).send() {
+        Ok(response) => {
+            println!("Pong response: {:?}", response);
+            Ok(())
+        }
+        Err(err) => {
+            eprintln!("Error sending ping: {}", err);
+            Err(())
+        }
+    }
 }
