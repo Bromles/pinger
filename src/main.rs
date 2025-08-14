@@ -64,7 +64,7 @@ fn main() {
             AnsiStripper::new(RotatingFile::new(
                 "pinger.log",
                 AppendCount::new(3),
-                ContentLimit::Time(TimeFrequency::Daily),
+                ContentLimit::Time(TimeFrequency::Hourly),
                 Compression::OnRotate(0),
             )),
         )))
