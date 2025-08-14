@@ -1,6 +1,6 @@
 use std::{net::IpAddr, sync::Arc, time::Duration};
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use file_rotate::TimeFrequency;
 use hickory_resolver::TokioResolver;
 use humantime::parse_duration;
@@ -23,6 +23,25 @@ struct Args {
     /// interval between pings
     #[arg(short, long, value_parser = parse_duration, default_value = "5s")]
     interval: Duration,
+
+    /// log file rotation interval
+    #[arg(short, long, value_enum, default_value_t)]
+    log_rotation: LogRotation,
+}
+
+#[derive(ValueEnum, Clone, Default, Debug)]
+enum LogRotation {
+    /// Rotate every hour.
+    Hourly,
+    /// Rotate one time a day.
+    #[default]
+    Daily,
+    /// Rotate ones a week.
+    Weekly,
+    /// Rotate every month.
+    Monthly,
+    /// Rotate yearly.
+    Yearly,
 }
 
 impl Args {
@@ -53,6 +72,8 @@ impl Args {
 }
 
 fn main() {
+    let args = Args::parse();
+
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -64,15 +85,13 @@ fn main() {
             AnsiStripper::new(RotatingFile::new(
                 "pinger.log",
                 AppendCount::new(3),
-                ContentLimit::Time(TimeFrequency::Hourly),
+                ContentLimit::Time(map_log_rotation(&args.log_rotation)),
                 Compression::OnRotate(0),
             )),
         )))
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("failed to initialise logger");
-
-    let args = Args::parse();
 
     let runtime = runtime::Builder::new_multi_thread()
         .enable_all()
@@ -91,6 +110,16 @@ fn main() {
             }
         }
     });
+}
+
+fn map_log_rotation(rotation: &LogRotation) -> TimeFrequency {
+    match rotation {
+        LogRotation::Hourly => TimeFrequency::Hourly,
+        LogRotation::Daily => TimeFrequency::Daily,
+        LogRotation::Weekly => TimeFrequency::Weekly,
+        LogRotation::Monthly => TimeFrequency::Monthly,
+        LogRotation::Yearly => TimeFrequency::Yearly,
+    }
 }
 
 async fn run(args: &Args) -> Result<(), String> {
