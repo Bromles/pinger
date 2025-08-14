@@ -1,0 +1,16 @@
+[package]
+name = "pinger"
+version = "0.1.0"
+edition = "2024"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+ping = "0.6"
+tokio = { version = "1.47", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
