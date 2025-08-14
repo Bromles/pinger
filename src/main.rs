@@ -138,11 +138,14 @@ async fn run(args: &Args) -> Result<(), String> {
         .await
         .map_err(|err| err.to_string())?;
 
-        if res.is_err() {
-            error!("Failed to ping to {}", addr);
+        match res {
+            Ok(_) => {
+                info!("Sent ping to {}", addr);
+            }
+            Err(err) => {
+                error!("Failed to ping to {}, error: {}", addr, err);
+            }
         }
-
-        info!("Sent ping to {}", addr);
     }
 }
 
