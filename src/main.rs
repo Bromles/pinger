@@ -23,10 +23,6 @@ struct Args {
     /// interval between pings
     #[arg(short, long, value_parser = parse_duration, default_value = "5s")]
     interval: Duration,
-
-    /// log separation duration
-    #[arg(short, long, value_parser = parse_duration, default_value = "1d")]
-    logs_per_file: Duration,
 }
 
 impl Args {
