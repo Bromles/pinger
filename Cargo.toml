@@ -17,3 +17,4 @@ hickory-resolver = { version = "0.25" }
 humantime = "2.2"
 tracing-subscriber-multi = "0.1"
 file-rotate = "0.7"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

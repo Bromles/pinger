@@ -848,6 +848,7 @@ dependencies = [
  "ping",
  "tokio",
  "tracing",
+ "tracing-subscriber",
  "tracing-subscriber-multi",
 ]
 

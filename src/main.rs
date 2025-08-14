@@ -54,18 +54,22 @@ impl Args {
 
 fn main() {
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(tracing::Level::TRACE)
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
+        )
         .with_ansi(true)
         .with_writer(std::sync::Mutex::new(DualWriter::new(
             std::io::stderr(),
             AnsiStripper::new(RotatingFile::new(
-                "program.log",
+                "pinger.log",
                 AppendCount::new(3),
                 ContentLimit::Time(TimeFrequency::Daily),
                 Compression::OnRotate(0),
             )),
         )))
         .finish();
+
     tracing::subscriber::set_global_default(subscriber).expect("failed to initialise logger");
 
     let args = Args::parse();
@@ -94,6 +98,8 @@ async fn run(args: &Args) -> Result<(), String> {
     let addr = Arc::new(args.address);
 
     loop {
+        interval.tick().await;
+
         let addr_clone = addr.clone();
 
         spawn_blocking(move || {
@@ -105,8 +111,6 @@ async fn run(args: &Args) -> Result<(), String> {
         .map_err(|err| err.to_string())?;
 
         info!("Sent ping to {}", addr);
-
-        interval.tick().await;
     }
 }
 
