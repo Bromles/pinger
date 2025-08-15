@@ -126,6 +126,8 @@ async fn run(args: &Args) -> Result<(), String> {
     let mut interval = tokio::time::interval(args.interval);
     let addr = Arc::new(args.address);
 
+    info!("Pinging {}", addr);
+
     loop {
         interval.tick().await;
 
@@ -138,13 +140,8 @@ async fn run(args: &Args) -> Result<(), String> {
         .await
         .map_err(|err| err.to_string())?;
 
-        match res {
-            Ok(_) => {
-                info!("Sent ping to {}", addr);
-            }
-            Err(err) => {
-                error!("Failed to ping {}, error: {}", addr, err);
-            }
+        if let Err(err) = res {
+            error!("Failed to ping {}, error: {}", addr, err);
         }
     }
 }
