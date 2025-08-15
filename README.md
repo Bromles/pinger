@@ -7,6 +7,7 @@ Supports:
 - Domain name resolution
 - Customizable ping interval
 - Log file rotation
+- Graceful shutdown on SIGINT and SIGTERM signals
 
 ## License
 
