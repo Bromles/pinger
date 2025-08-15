@@ -4,7 +4,7 @@ use clap::{Parser, ValueEnum};
 use file_rotate::TimeFrequency;
 use hickory_resolver::TokioResolver;
 use humantime::parse_duration;
-use ping::Ping;
+use ping::{Ping, SocketType};
 use tokio::signal;
 use tokio::{runtime, task::spawn_blocking};
 use tracing::{error, info};
@@ -27,6 +27,10 @@ struct Args {
     /// log file rotation interval
     #[arg(short, long, value_enum, default_value_t)]
     log_rotation: LogRotation,
+
+    /// Socket type to use for pinging.
+    #[arg(short, long, value_enum, default_value_t)]
+    socket_type: Socket,
 }
 
 #[derive(ValueEnum, Clone, Default, Debug)]
@@ -42,6 +46,15 @@ enum LogRotation {
     Monthly,
     /// Rotate yearly.
     Yearly,
+}
+
+#[derive(ValueEnum, Clone, Default, Debug)]
+enum Socket {
+    /// Raw socket, may require root privileges.
+    #[default]
+    Raw,
+    /// Datagram socket.
+    Datagram,
 }
 
 impl Args {
@@ -72,7 +85,7 @@ impl Args {
 }
 
 fn main() {
-    let args = Args::parse();
+    let args = Arc::new(Args::parse());
 
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(
@@ -100,7 +113,7 @@ fn main() {
 
     runtime.block_on(async {
         tokio::select! {
-            res = run(&args) => {
+            res = run(args) => {
                 if let Err(err) = res {
                     error!("Error: {}", err);
                 }
@@ -122,7 +135,14 @@ fn map_log_rotation(rotation: &LogRotation) -> TimeFrequency {
     }
 }
 
-async fn run(args: &Args) -> Result<(), String> {
+fn map_socket_type(socket_type: &Socket) -> SocketType {
+    match socket_type {
+        Socket::Raw => SocketType::RAW,
+        Socket::Datagram => SocketType::DGRAM,
+    }
+}
+
+async fn run(args: Arc<Args>) -> Result<(), String> {
     let mut interval = tokio::time::interval(args.interval);
     let addr = Arc::new(args.address);
 
@@ -132,9 +152,14 @@ async fn run(args: &Args) -> Result<(), String> {
         interval.tick().await;
 
         let addr_clone = addr.clone();
+        let args_clone = args.clone();
 
         let res = spawn_blocking(move || {
-            let pinger = Ping::new(*addr_clone);
+            let socket_type = map_socket_type(&args_clone.socket_type);
+
+            let mut pinger_builder = Ping::new(*addr_clone);
+            let pinger = pinger_builder.socket_type(socket_type);
+
             return pinger.send();
         })
         .await
