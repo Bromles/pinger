@@ -6,7 +6,7 @@ Supports:
 - IPv4 and IPv6 addresses
 - Domain name resolution
 - Customizable ping interval
-- Log file rotation
+- Log file rotation with compression
 - Graceful shutdown on SIGINT and SIGTERM signals
 
 ## License
