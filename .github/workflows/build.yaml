@@ -49,7 +49,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           toolchain: "stable"
           args: "--locked --release"
-          strip: true
+          force-use-cross: true
 
       - name: Publish artifacts
         uses: houseabsolute/actions-rust-release@v0
